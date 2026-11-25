@@ -1,0 +1,451 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Слушаем вместе</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap">
+<style>
+/* Layout: пояснение слева, липкий телефон с прототипом справа; на узком экране телефон идёт первым */
+:root{
+  --bg:#f3f5f9; --card:#ffffff; --fg:#14171f; --muted:#59627a; --line:#dde2ec;
+  --accent:#2a64e0; --accent-soft:#e4ecff; --good:#177a4b; --warn:#a8531a; --ctrl:#6b4fc7;
+  --font-head:'Manrope',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif;
+  /* приложение внутри телефона всегда тёмное */
+  --a-bg:#0e1014; --a-surface:#181b22; --a-surface2:#232733; --a-line:#2d3240;
+  --a-fg:#f1f3f8; --a-muted:#8f98aa; --a-accent:#4c8dff; --a-hot:#ff7a59;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b0d12; --card:#141820; --fg:#eef0f5; --muted:#9aa3b6; --line:#262c38;
+  --accent:#7aa6ff; --accent-soft:#16223f; --good:#4cc58a; --warn:#f0a06a; --ctrl:#b6a4ff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b0d12; --card:#141820; --fg:#eef0f5; --muted:#9aa3b6; --line:#262c38;
+  --accent:#7aa6ff; --accent-soft:#16223f; --good:#4cc58a; --warn:#f0a06a; --ctrl:#b6a4ff; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.6;
+  padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--font-head);text-wrap:balance;margin:0}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
+.lead{font-size:18px;color:var(--muted);max-width:60ch;margin:14px 0 0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:56px;align-items:start;margin-top:36px}
+.text{min-width:0;display:flex;flex-direction:column;gap:36px}
+.text section{max-width:68ch}
+h2{font-size:22px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em}
+p{margin:0 0 10px}
+ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;max-width:68ch}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.t-main{background:var(--accent-soft);color:var(--accent)}
+.t-sup{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.t-ctl{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+
+/* телефон */
+.stage{position:sticky;top:24px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.phone{width:340px;height:700px;border-radius:46px;background:#050607;padding:10px;box-shadow:0 30px 60px -20px rgba(10,20,50,.45),0 0 0 1px rgba(255,255,255,.08) inset;flex:none}
+.screen{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:var(--a-bg);color:var(--a-fg);font-family:var(--font-body);font-size:14px;line-height:1.35;user-select:none}
+.status{position:absolute;top:0;left:0;right:0;height:40px;display:flex;justify-content:space-between;align-items:center;padding:6px 26px 0;font-size:13px;font-weight:600;z-index:6;pointer-events:none}
+.notch{position:absolute;top:9px;left:50%;width:84px;height:22px;border-radius:12px;background:#000;transform:translateX(-50%);z-index:7}
+.view{position:absolute;inset:0;display:flex;flex-direction:column;padding:48px 20px 18px}
+.view[hidden]{display:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible{outline:2px solid var(--a-accent);outline-offset:2px;border-radius:8px}
+.topbar{display:flex;align-items:center;justify-content:space-between;height:36px}
+.topbar .ttl{font-size:12px;color:var(--a-muted);text-align:center;letter-spacing:.02em}
+.ib{width:36px;height:36px;display:grid;place-items:center;border-radius:50%}
+.ib svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cover{aspect-ratio:1;width:100%;border-radius:20px;margin-top:14px;position:relative;overflow:hidden;box-shadow:0 18px 30px -16px rgba(0,0,0,.7)}
+.cover::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 70% 25%,rgba(255,255,255,.22),transparent 45%)}
+.meta{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:10px}
+.meta .name{font-family:var(--font-head);font-weight:700;font-size:20px;line-height:1.2}
+.meta .artist{color:var(--a-muted);font-size:14px;margin-top:2px}
+.prog{margin-top:16px}
+.bar{height:4px;border-radius:2px;background:var(--a-surface2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--a-fg);border-radius:2px;width:0}
+.times{display:flex;justify-content:space-between;font-size:11px;color:var(--a-muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.ctrl{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:0 6px}
+.play{width:60px;height:60px;border-radius:50%;background:var(--a-fg);color:#0e1014;display:grid;place-items:center}
+.play svg{width:26px;height:26px;fill:currentColor}
+.ctrl .ib svg{width:24px;height:24px}
+.actions{display:flex;align-items:center;gap:10px;margin-top:auto}
+.together{flex:1;height:48px;border-radius:24px;background:var(--a-accent);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;position:relative}
+.together svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.together .new{position:absolute;top:-7px;right:14px;background:var(--a-hot);color:#1a0b05;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;letter-spacing:.03em}
+.together.pulse::before{content:"";position:absolute;inset:-4px;border-radius:28px;border:2px solid var(--a-accent);opacity:.0;animation:pulse 2s ease-out infinite}
+@keyframes pulse{0%{opacity:.8;transform:scale(.97)}100%{opacity:0;transform:scale(1.07)}}
+.actions .ib{background:var(--a-surface);width:48px;height:48px}
+
+/* шторка приглашения */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:8}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;background:var(--a-surface);border-radius:26px 26px 0 0;padding:10px 18px 18px;transform:translateY(102%);transition:transform .32s cubic-bezier(.2,.8,.2,1);z-index:9;display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--a-line);margin:0 auto 12px}
+.sheet h3{font-size:19px;font-weight:700}
+.sheet .sub{color:var(--a-muted);font-size:13px;margin:4px 0 12px}
+.flist{display:flex;flex-direction:column;overflow:auto;margin:0 -6px;padding:0 6px;min-height:0}
+.frow{display:flex;align-items:center;gap:12px;padding:8px 0}
+.ava{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;color:#101216;flex:none;position:relative}
+.ava .dot{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:#43d17d;border:2px solid var(--a-surface)}
+.fname{flex:1;min-width:0}
+.fname b{display:block;font-weight:600;font-size:14px}
+.fname span{font-size:12px;color:var(--a-muted)}
+.chip{height:32px;padding:0 14px;border-radius:16px;font-size:13px;font-weight:600;background:var(--a-surface2);min-width:92px;transition:background .2s}
+.chip.inv{background:transparent;border:1px solid var(--a-line);color:var(--a-muted)}
+.chip.in{background:rgba(67,209,125,.16);color:#58e08f}
+.linkrow{display:flex;align-items:center;gap:12px;padding:10px 12px;margin-top:8px;border-radius:14px;background:var(--a-surface2);width:100%;text-align:left}
+.linkrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.linkrow small{display:block;color:var(--a-muted);font-size:12px}
+.start{margin-top:12px;height:50px;border-radius:25px;background:var(--a-accent);color:#fff;font-weight:600;font-size:15px;width:100%;transition:opacity .2s}
+.start[disabled]{background:var(--a-surface2);color:var(--a-muted);cursor:default}
+
+/* экран сессии */
+.people{display:flex;align-items:center;gap:0;margin-top:14px}
+.people .ava{margin-right:-8px;border:2px solid var(--a-bg);width:44px;height:44px}
+.people .ava.talk::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--a-accent);animation:ring 1.6s ease-out infinite}
+@keyframes ring{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.18)}}
+.people .cnt{margin-left:18px;font-size:13px;color:var(--a-muted)}
+.np{display:flex;gap:12px;align-items:center;margin-top:16px;padding:12px;border-radius:18px;background:var(--a-surface)}
+.np .cv{width:56px;height:56px;border-radius:12px;flex:none}
+.np .info{flex:1;min-width:0}
+.np .info b{display:block;font-family:var(--font-head);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np .info span{font-size:12px;color:var(--a-muted)}
+.np .play{width:44px;height:44px}
+.np .play svg{width:20px;height:20px}
+.np .bar{margin-top:8px}
+.qhead{display:flex;align-items:center;justify-content:space-between;margin:16px 0 4px}
+.qhead b{font-size:13px;color:var(--a-muted);font-weight:600}
+.add{height:30px;padding:0 12px;border-radius:15px;background:var(--a-surface2);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.add svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.queue{display:flex;flex-direction:column;overflow:auto;min-height:0;flex:1}
+.qi{display:flex;align-items:center;gap:12px;padding:7px 0;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.qi .cv{width:40px;height:40px;border-radius:9px;flex:none}
+.qi .t{flex:1;min-width:0}
+.qi .t b{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qi .t span{font-size:12px;color:var(--a-muted)}
+.qi .by{font-size:11px;color:var(--a-muted);background:var(--a-surface);padding:3px 8px;border-radius:9px;white-space:nowrap}
+.react{display:flex;gap:8px;justify-content:center;padding-top:8px}
+.react button{width:46px;height:46px;border-radius:50%;background:var(--a-surface);font-size:22px;line-height:1;transition:transform .12s}
+.react button:active{transform:scale(.88)}
+.leave{margin-top:10px;font-size:13px;color:var(--a-muted);text-align:center;width:100%;padding:6px}
+.float{position:absolute;bottom:90px;font-size:28px;pointer-events:none;z-index:5;animation:rise 2.1s ease-out forwards;display:flex;flex-direction:column;align-items:center}
+.float small{font-size:10px;background:var(--a-surface2);padding:1px 7px;border-radius:8px;margin-top:2px;color:var(--a-fg)}
+@keyframes rise{0%{opacity:0;transform:translateY(0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translateY(-260px) scale(1.15)}}
+.toast{position:absolute;left:50%;top:52px;transform:translate(-50%,-14px);background:var(--a-surface2);padding:9px 16px;border-radius:18px;font-size:13px;opacity:0;transition:.3s;z-index:12;white-space:nowrap;pointer-events:none;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.steps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.steps button{font-size:13px;font-weight:600;padding:8px 14px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+.steps button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.steps button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted);text-align:center;max-width:320px;margin:0;min-height:40px}
+
+@media (max-width:920px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:32px}
+  .stage{position:static;order:-1}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Концепт для VK Музыки</p>
+    <h1>Слушаем вместе</h1>
+    <p class="lead">Общая комната прослушивания: друзья из VK слушают один и тот же трек в одну секунду, собирают очередь и отправляют реакции.</p>
+  </header>
+
+  <div class="layout">
+    <main class="text">
+      <section>
+        <h2>Что предлагаю</h2>
+        <p>Новая функция в плеере: кнопка «Вместе» запускает сессию, в которую можно позвать друзей из VK или отправить ссылку. Вход занимает один тап из экрана, где пользователь уже слушает трек.</p>
+        <ul class="plain">
+          <li><b>Синхронное воспроизведение.</b> Трек, пауза и перемотка одинаковы у всех участников.</li>
+          <li><b>Общая очередь.</b> Каждый добавляет треки, рядом с ними видно, кто добавил.</li>
+          <li><b>Реакции.</b> Эмодзи появляются на экране у всех и дают повод вернуться в сессию.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Ради чего</h2>
+        <p>Сейчас музыка в приложении в основном личный опыт. Социальный граф VK, главное преимущество перед отдельными музыкальными сервисами, почти не работает внутри самого прослушивания: друзья обмениваются треками ссылками в чатах и уходят слушать каждый к себе.</p>
+        <p>Гипотезы, которые нужно проверить на данных:</p>
+        <ul class="plain">
+          <li>Совместное прослушивание увеличивает время в приложении, потому что у музыки появляется социальный повод.</li>
+          <li>Пользователи, которые слушают с друзьями, возвращаются чаще и дольше остаются в продукте.</li>
+          <li>Приглашения возвращают в приложение неактивных друзей и приводят новых людей.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>На какие метрики повлияет</h2>
+        <div class="tablewrap" role="region" aria-label="Таблица метрик" tabindex="0">
+          <table>
+            <thead><tr><th>Метрика</th><th>Роль</th><th>Зачем смотрим</th></tr></thead>
+            <tbody>
+              <tr><td>Время прослушивания на пользователя в неделю</td><td><span class="tag t-main">Основная</span></td><td>Главная цель: больше музыки благодаря социальному поводу.</td></tr>
+              <tr><td>Retention D7 и D30</td><td><span class="tag t-main">Основная</span></td><td>Привычка слушать вместе должна возвращать пользователей.</td></tr>
+              <tr><td>Доля пользователей, запустивших сессию (от WAU)</td><td><span class="tag t-sup">Поддерживающая</span></td><td>Функция заметна и понятна.</td></tr>
+              <tr><td>Конверсия «приглашение → вход в сессию»</td><td><span class="tag t-sup">Поддерживающая</span></td><td>Насколько хорошо работает приглашение.</td></tr>
+              <tr><td>Приглашённые друзья на одного организатора</td><td><span class="tag t-sup">Поддерживающая</span></td><td>Вирусность и возврат неактивных друзей.</td></tr>
+              <tr><td>Доля пропущенных треков (skip rate)</td><td><span class="tag t-ctl">Контрольная</span></td><td>Не должна вырасти, иначе общая очередь раздражает.</td></tr>
+              <tr><td>Рассинхрон больше 1 с и ошибки подключения</td><td><span class="tag t-ctl">Контрольная</span></td><td>Качество технической реализации.</td></tr>
+              <tr><td>Жалобы и отключения пуш-уведомлений</td><td><span class="tag t-ctl">Контрольная</span></td><td>Приглашения не должны превращаться в спам.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Как проверить A/B-тестом</h2>
+        <ul class="plain">
+          <li><b>Аудитория:</b> пользователи VK Музыки, у которых есть хотя бы один друг, слушающий музыку.</li>
+          <li><b>Группы:</b> контроль без кнопки «Вместе» и тест с функцией. Делить нужно по кластерам друзей, а не по отдельным людям: иначе друзья из разных групп влияют друг на друга и результат искажается.</li>
+          <li><b>Длительность:</b> не меньше двух недель, чтобы увидеть недельный цикл и retention D7.</li>
+          <li><b>Запуск:</b> сначала на небольшой доле аудитории, затем 50/50.</li>
+          <li><b>Критерий успеха:</b> основная метрика растёт статистически значимо, контрольные не ухудшаются. Минимальный эффект и размер выборки согласовать с аналитиком.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Риски</h2>
+        <ul class="plain">
+          <li>Права правообладателей на совместное воспроизведение нужно согласовать до запуска.</li>
+          <li>Статус «слушает сейчас» должен быть под контролем приватности пользователя.</li>
+          <li>Общая очередь требует правил: кто может добавлять треки и как их убирать.</li>
+        </ul>
+      </section>
+
+      <p class="note">Это неофициальный концепт. Он не является продуктом VK и не использует его логотипы. Прототип собран с помощью ИИ, имена друзей, треки и исполнители вымышлены.</p>
+    </main>
+
+    <aside class="stage" aria-label="Кликабельный прототип">
+      <div class="phone">
+        <div class="screen" id="screen">
+          <div class="notch"></div>
+          <div class="status"><span>9:41</span><span aria-hidden="true">5G ▮▮▮</span></div>
+          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+          <!-- Экран 1: плеер -->
+          <section class="view" id="vPlayer">
+            <div class="topbar">
+              <span class="ib"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>
+              <span class="ttl">Сейчас играет</span>
+              <span class="ib"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+            </div>
+            <div class="cover" id="pCover"></div>
+            <div class="meta">
+              <div><div class="name" id="pName"></div><div class="artist" id="pArtist"></div></div>
+              <button class="ib" aria-label="В избранное" id="like"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.600-7 10-7 10z"/></svg></button>
+            </div>
+            <div class="prog"><div class="bar"><i id="pBar"></i></div><div class="times"><span id="pCur">0:00</span><span id="pDur">0:00</span></div></div>
+            <div class="ctrl">
+              <button class="ib" aria-label="Перемешать"><svg viewBox="0 0 24 24"><path d="M3 7h3c5 0 5 10 10 10h5M3 17h3c1.800 0 3-1 4-2.400M14 9c.800-1.200 1.200-2 3-2h4M18 4l3 3-3 3M18 14l3 3-3 3"/></svg></button>
+              <button class="ib" aria-label="Предыдущий трек"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+              <button class="play" id="pPlay" aria-label="Пауза"></button>
+              <button class="ib" id="pNext" aria-label="Следующий трек"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+              <button class="ib" aria-label="Повтор"><svg viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 013-3h13M17 3l3 3-3 3M20 13v2a3 3 0 01-3 3H4M7 21l-3-3 3-3"/></svg></button>
+            </div>
+            <div class="actions">
+              <button class="together pulse" id="openInvite" aria-label="Слушать вместе">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.300"/><path d="M3 20c0-3.300 2.700-6 6-6s6 2.700 6 6"/><circle cx="17.500" cy="9" r="2.500"/><path d="M17 14.200c2.500 0 4.500 2 4.500 4.800"/></svg>
+                Слушать вместе<span class="new">НОВОЕ</span>
+              </button>
+              <button class="ib" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg></button>
+            </div>
+          </section>
+
+          <!-- Экран 3: сессия -->
+          <section class="view" id="vSession" hidden>
+            <div class="topbar">
+              <button class="ib" id="backToPlayer" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+              <span class="ttl" style="color:var(--a-fg);font-weight:600;font-size:15px">Слушаем вместе</span>
+              <span class="ib"></span>
+            </div>
+            <div class="people" id="people"></div>
+            <div class="np">
+              <div class="cv" id="sCover"></div>
+              <div class="info"><b id="sName"></b><span id="sArtist"></span><div class="bar"><i id="sBar"></i></div></div>
+              <button class="play" id="sPlay" aria-label="Пауза для всех"></button>
+            </div>
+            <div class="qhead"><b>Дальше в очереди</b><button class="add" id="addTrack"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Добавить</button></div>
+            <div class="queue" id="queue"></div>
+            <div class="react" id="react">
+              <button data-e="🔥" aria-label="Огонь">🔥</button>
+              <button data-e="❤️" aria-label="Сердце">❤️</button>
+              <button data-e="👏" aria-label="Аплодисменты">👏</button>
+              <button data-e="🎶" aria-label="Ноты">🎶</button>
+            </div>
+            <button class="leave" id="leave">Выйти из сессии</button>
+          </section>
+
+          <!-- Экран 2: шторка приглашения -->
+          <div class="scrim" id="scrim"></div>
+          <div class="sheet" id="sheet" role="dialog" aria-label="Слушать вместе">
+            <div class="grab"></div>
+            <h3>Слушать вместе</h3>
+            <p class="sub">Музыка будет играть у всех одновременно. Позовите друзей из VK.</p>
+            <div class="flist" id="flist"></div>
+            <button class="linkrow" id="copyLink">
+              <svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.700 0l3-3a4 4 0 00-5.700-5.700l-1 1M14 10a4 4 0 00-5.700 0l-3 3a4 4 0 005.700 5.700l1-1"/></svg>
+              <span>Скопировать ссылку<small>Для тех, кого нет в списке друзей</small></span>
+            </button>
+            <button class="start" id="start" disabled>Начать</button>
+          </div>
+        </div>
+      </div>
+      <nav class="steps" aria-label="Сценарий">
+        <button data-go="player" aria-current="true">1. Плеер</button>
+        <button data-go="invite">2. Приглашение</button>
+        <button data-go="session">3. Сессия</button>
+      </nav>
+      <p class="hint" id="hint"></p>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  var TRACKS=[
+    {n:'Ночной рейс',a:'Северные огни',d:192,g:'radial-gradient(circle at 25% 30%,#ffb85c,transparent 38%),radial-gradient(circle at 78% 70%,#e0476b,transparent 45%),linear-gradient(160deg,#1c2a5e,#0f1633)'},
+    {n:'Лёгкий шаг',a:'Полина Ветер',d:205,g:'radial-gradient(circle at 70% 25%,#9ff0d0,transparent 40%),radial-gradient(circle at 20% 80%,#2f8f83,transparent 50%),linear-gradient(200deg,#0e3b44,#0a1f2a)'},
+    {n:'Июльский город',a:'Две реки',d:178,g:'radial-gradient(circle at 30% 25%,#fff2a8,transparent 35%),radial-gradient(circle at 80% 80%,#ff8a4c,transparent 50%),linear-gradient(150deg,#7a2e3a,#2a1020)'},
+    {n:'Волна',a:'Сергей Ли',d:224,g:'radial-gradient(circle at 75% 30%,#8fd0ff,transparent 38%),radial-gradient(circle at 25% 75%,#3d6bff,transparent 50%),linear-gradient(170deg,#0f2a6b,#070f2b)'},
+    {n:'После заката',a:'Нора',d:187,g:'radial-gradient(circle at 20% 25%,#f6a9d0,transparent 38%),radial-gradient(circle at 75% 75%,#a8542f,transparent 48%),linear-gradient(160deg,#3b1d4a,#1a0e26)'}
+  ];
+  var FRIENDS=[
+    {id:'a',name:'Алина К.',st:'в сети',c:'#ffd37a',willing:true,delay:1100},
+    {id:'m',name:'Марат',st:'слушает сейчас',c:'#8fe0b5',willing:true,delay:1800},
+    {id:'s',name:'Софья П.',st:'была 12 минут назад',c:'#ffa8c7',willing:false,delay:0},
+    {id:'d',name:'Давид Н.',st:'в сети',c:'#9fc2ff',willing:false,delay:0}
+  ];
+  var S={screen:'player',playing:true,t:48,cur:0,queue:[{id:1,by:'Вы'},{id:2,by:'Вы'}],pool:[3,4,0],fs:{},timers:[],started:false};
+  var $=function(i){return document.getElementById(i)};
+  var ICON_PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE='<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  var HINTS={player:'Нажмите «Слушать вместе» под плеером.',invite:'Позовите друзей: двое из них ответят сразу. Затем нажмите «Начать».',session:'Добавьте трек в очередь и отправьте реакцию. Друзья тоже будут добавлять треки.'};
+
+  function fmt(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function toast(msg){var t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._h);toast._h=setTimeout(function(){t.classList.remove('on')},2000)}
+  function later(fn,ms){var h=setTimeout(fn,ms);S.timers.push(h)}
+  function clearTimers(){S.timers.forEach(clearTimeout);S.timers=[]}
+  function inCount(){return FRIENDS.filter(function(f){return S.fs[f.id]==='in'}).length}
+
+  function renderTrack(){
+    var tr=TRACKS[S.cur];
+    $('pCover').style.background=tr.g;$('pName').textContent=tr.n;$('pArtist').textContent=tr.a;
+    $('sCover').style.background=tr.g;$('sName').textContent=tr.n;$('sArtist').textContent=tr.a;
+    $('pDur').textContent=fmt(tr.d);
+    renderProgress();renderPlay();
+  }
+  function renderProgress(){
+    var tr=TRACKS[S.cur],p=Math.min(100,S.t/tr.d*100);
+    $('pBar').style.width=p+'%';$('sBar').style.width=p+'%';$('pCur').textContent=fmt(S.t);
+  }
+  function renderPlay(){
+    var h=S.playing?ICON_PAUSE:ICON_PLAY,l=S.playing?'Пауза':'Играть';
+    $('pPlay').innerHTML=h;$('sPlay').innerHTML=h;$('pPlay').setAttribute('aria-label',l);$('sPlay').setAttribute('aria-label',l+' для всех');
+  }
+  function renderFriends(){
+    $('flist').innerHTML=FRIENDS.map(function(f){
+      var st=S.fs[f.id]||'idle',label=st==='in'?'В сессии':st==='inv'?'Приглашён':'Позвать',cls=st==='in'?'chip in':st==='inv'?'chip inv':'chip';
+      var online=f.st!=='была 12 минут назад';
+      return '<div class="frow"><div class="ava" style="background:'+f.c+'">'+esc(f.name[0])+(online?'<i class="dot"></i>':'')+'</div>'+
+        '<div class="fname"><b>'+esc(f.name)+'</b><span>'+esc(f.st)+'</span></div>'+
+        '<button class="'+cls+'" data-f="'+f.id+'"'+(st!=='idle'?' disabled':'')+'>'+label+'</button></div>';
+    }).join('');
+    var n=inCount(),b=$('start');
+    b.disabled=n===0;b.textContent=n===0?'Начать':'Начать с друзьями: '+n;
+  }
+  function renderPeople(){
+    var h='<div class="ava talk" style="background:#d7dcff">Я</div>';
+    FRIENDS.forEach(function(f){if(S.fs[f.id]==='in')h+='<div class="ava" style="background:'+f.c+'">'+esc(f.name[0])+'</div>'});
+    h+='<span class="cnt">'+(1+inCount())+' слушают</span>';
+    $('people').innerHTML=h;
+  }
+  function renderQueue(){
+    $('queue').innerHTML=S.queue.map(function(q){
+      var tr=TRACKS[q.id];
+      return '<div class="qi"><div class="cv" style="background:'+tr.g+'"></div><div class="t"><b>'+esc(tr.n)+'</b><span>'+esc(tr.a)+'</span></div><span class="by">'+esc(q.by)+'</span></div>';
+    }).join('');
+  }
+  function renderSteps(){
+    document.querySelectorAll('.steps button').forEach(function(b){b.setAttribute('aria-current',String(b.getAttribute('data-go')===S.screen))});
+    $('hint').textContent=HINTS[S.screen];
+  }
+  function setScreen(sc){
+    S.screen=sc;
+    var sheetOn=sc==='invite';
+    $('vPlayer').hidden=(sc==='session');$('vSession').hidden=(sc!=='session');
+    $('sheet').classList.toggle('on',sheetOn);$('scrim').classList.toggle('on',sheetOn);
+    if(sc==='invite')renderFriends();
+    if(sc==='session'){renderPeople();renderQueue()}
+    $('openInvite').classList.toggle('pulse',sc==='player'&&!S.started);
+    renderSteps();
+  }
+  function nextTrack(){
+    if(S.queue.length){S.cur=S.queue.shift().id}else{S.cur=(S.cur+1)%TRACKS.length}
+    S.t=0;renderTrack();if(S.screen==='session')renderQueue();
+  }
+  function invite(id){
+    var f=FRIENDS.filter(function(x){return x.id===id})[0];
+    S.fs[id]='inv';renderFriends();
+    if(f.willing){later(function(){
+      S.fs[id]='in';
+      if(S.screen==='invite'||S.screen==='session'){toast(f.name+' вошла в сессию'.replace('вошла',f.id==='m'?'вошёл':'вошла'));if(S.screen==='invite')renderFriends();else{renderPeople()}}
+    },f.delay)}
+  }
+  function startSession(){
+    S.started=true;setScreen('session');S.playing=true;renderPlay();
+    later(function(){if(S.screen!=='session')return;var f=FRIENDS.filter(function(x){return S.fs[x.id]==='in'})[0];if(!f||!S.pool.length)return;
+      S.queue.push({id:S.pool.shift(),by:f.name.split(' ')[0]});renderQueue();toast(f.name.split(' ')[0]+(f.id==='m'?' добавил':' добавила')+' трек')},3500);
+    later(function(){if(S.screen==='session')floatEmoji('🔥',FRIENDS[0].name.split(' ')[0])},5500);
+  }
+  function floatEmoji(e,who){
+    var el=document.createElement('div');el.className='float';
+    el.style.left=(40+Math.random()*60)+'%';
+    el.innerHTML='<span>'+e+'</span>'+(who?'<small>'+esc(who)+'</small>':'');
+    $('screen').appendChild(el);setTimeout(function(){el.remove()},2200);
+  }
+  function reset(){
+    clearTimers();S.fs={};S.started=false;S.queue=[{id:1,by:'Вы'},{id:2,by:'Вы'}];S.pool=[3,4,0];S.cur=0;S.t=48;S.playing=true;
+    renderTrack();setScreen('player');
+  }
+  function go(sc){
+    if(sc==='session'&&inCount()<2){FRIENDS.slice(0,2).forEach(function(f){S.fs[f.id]='in'})}
+    if(sc==='session')startSession();else setScreen(sc);
+  }
+
+  $('openInvite').addEventListener('click',function(){setScreen('invite')});
+  $('scrim').addEventListener('click',function(){setScreen('player')});
+  $('flist').addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(b&&!b.disabled)invite(b.getAttribute('data-f'))});
+  $('start').addEventListener('click',function(){if(inCount()>0)startSession()});
+  $('copyLink').addEventListener('click',function(){
+    var msg='Ссылка-приглашение создана';
+    try{navigator.clipboard.writeText('Присоединяйтесь к прослушиванию (ссылка из прототипа)').then(function(){toast('Ссылка скопирована')},function(){toast(msg)})}catch(e){toast(msg)}
+  });
+  $('backToPlayer').addEventListener('click',function(){setScreen('player')});
+  $('leave').addEventListener('click',function(){reset();toast('Вы вышли из сессии')});
+  $('addTrack').addEventListener('click',function(){
+    if(!S.pool.length){toast('Это все треки из прототипа');return}
+    S.queue.push({id:S.pool.shift(),by:'Вы'});renderQueue();
+  });
+  $('react').addEventListener('click',function(e){var b=e.target.closest('button');if(b)floatEmoji(b.getAttribute('data-e'),'Вы')});
+  [$('pPlay'),$('sPlay')].forEach(function(b){b.addEventListener('click',function(){S.playing=!S.playing;renderPlay()})});
+  $('pNext').addEventListener('click',nextTrack);
+  $('like').addEventListener('click',function(){var p=this.querySelector('path');var on=p.getAttribute('fill')==='currentColor';p.setAttribute('fill',on?'none':'currentColor')});
+  document.querySelector('.steps').addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(b)go(b.getAttribute('data-go'))});
+  setInterval(function(){if(!S.playing)return;S.t++;if(S.t>=TRACKS[S.cur].d)nextTrack();else renderProgress()},1000);
+
+  renderTrack();setScreen('player');
+})();
+</script>
+
+</body></html>
